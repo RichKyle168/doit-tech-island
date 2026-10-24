@@ -4,6 +4,9 @@
  * sentences split for pacing).
  */
 
+/** The sentence the voice picker plays. */
+export const SAMPLE = '您好，我是 Dr. T。這是朗讀的聲音和速度，聽起來舒服嗎？';
+
 /** A technology page, in reading order. label = section heading (null for the opening summary). */
 export const TECH_PARTS = [
   ['summary', null],

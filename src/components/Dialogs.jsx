@@ -122,13 +122,16 @@ export function VoiceDialog({ onClose }) {
   const [, refresh] = useState(0);
   const list = voices();
   const current = getSettings();
-  const sample = () => play('sample', [{ part: 'sample', text: SAMPLE }]);
+  const sample = () => play('sample', [{ id: 'drt', part: 'sample', text: SAMPLE }]);
   const choose = (patch) => { setSettings(patch); refresh((n) => n + 1); sample(); };
   useEffect(() => () => stop(), [stop]);
   return (
     <Dialog title="朗讀的聲音" onClose={onClose}>
       <div className="voice">
         {!mode && <p className="search__empty">這台裝置沒有可以朗讀國語的聲音。</p>}
+        {mode && !list.some((v) => v.gender === 'male' && !v.note.includes('舊式')) && (
+          <p className="voice__hint">這台裝置沒有自然的國語男聲，所以先用女聲朗讀。</p>
+        )}
         {mode && (
           <>
             <fieldset className="voice__group">

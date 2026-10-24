@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  RELATION_LABEL, districtLinks, districtsOf, get, islandOf, refsOf, streetsOf, techLinks, techsOf, techsOnStreet,
+  RELATION_LABEL, spokenName, districtLinks, districtsOf, get, islandOf, refsOf, streetsOf, techLinks, techsOf, techsOnStreet,
 } from '../data/world.js';
 import { DISTRICT_PARTS, TECH_PARTS } from '../../shared/speech.js';
 import { SourceButton, Text } from './Source.jsx';
@@ -222,13 +222,7 @@ function kicker(x) {
   return '';
 }
 
-function titleOf(x) {
-  if (x.kind === 'island') return x.islandZh;
-  if (x.kind === 'district') return `${x.nameZh}區`;
-  if (x.kind === 'street') return `${x.nameZh}街`;
-  if (x.kind === 'topic') return x.t.replace(/　/g, ' ');
-  return x.nameZh;
-}
+const titleOf = spokenName;
 
 export { titleOf };
 

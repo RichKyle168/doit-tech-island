@@ -323,6 +323,7 @@ p.pending { display: inline-block; }
 .voice__name { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
 .voice__name em { font-style: normal; font-size: 13px; font-weight: 500; padding: 0 8px; border-radius: 10px; background: var(--buoy); color: var(--ink); }
 .voice__note { font-size: 15px; color: var(--ink-2); }
+.voice__hint { margin-top: 12px; padding: 10px 14px; background: var(--buoy-soft); border-left: 4px solid var(--buoy); font-size: 15px; }
 .voice__foot { margin-top: 18px; display: grid; gap: 10px; justify-items: start; }
 .voice__foot p { font-size: 15px; color: var(--ink-3); }
 

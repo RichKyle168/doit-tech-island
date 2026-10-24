@@ -15,7 +15,7 @@ npm run build      # 建置到 dist/
 npm run check      # 內容完整性檢查
 ```
 
-整個網站是靜態檔案，不需要伺服器或資料庫。
+網站是靜態檔案，不需要資料庫；唯一的伺服器程式是選用的自然男聲（`api/tts`）。
 
 ## 部署到 Vercel
 
@@ -39,7 +39,8 @@ Vercel 免費方案（Hobby）限個人、非商業用途；正式對外的商�
 ## 語音朗讀與大字
 
 * 每個欄位都有「朗讀」按鈕，區與技術另有「朗讀全文」；Dr. T 的導覽也可以「唸給我聽」。正在朗讀的段落會亮起，換頁就停止。
-* 使用訪客裝置內建的國語語音：優先選自然／神經語音（Edge 的「Online (Natural)」、Apple 的增強版、Google 的線上語音）與臺灣國語，舊式的電腦語音排在最後；音調維持語音本身，語速預設 1.2 倍。
+* **自然男聲（建議）**：在 Vercel 的 Environment Variables 加上 `AZURE_SPEECH_KEY` 與 `AZURE_SPEECH_REGION`，網站會用 Azure 神經語音 `zh-TW-YunJheNeural`（溫暖的臺灣男聲）朗讀，每台手機聽到的都是同一個聲音。錄音由 `api/tts` 產生、存在 Vercel 的 CDN，同一段文字只合成一次；Azure Speech 免費方案（F0）每月 50 萬字元，整座島的文字遠低於此。可調整 `TTS_VOICE`、`TTS_RATE`（預設 `0%`）、`TTS_PITCH`（預設 `0%`）。
+* **沒有設定時**：使用訪客裝置內建的國語語音：男聲優先，接著是自然／神經語音（Edge 的「Online (Natural)」、Apple 的增強版、Google 的線上語音）與臺灣國語，舊式的電腦語音排在最後；音調維持語音本身，語速預設 1.2 倍。多數手機內建的臺灣國語只有女聲。
 * 「聲音」可以自己挑聲音（點一下就試聽）和語速（慢一點 1 倍／正常 1.2 倍／快一點 1.4 倍／更快 1.6 倍），選擇會記在這台裝置上。
 * 內文 17px 以上，海圖上的地名都是可以直接點的按鈕，所有按鈕至少 40–44px 高。
 * 手機上，說明欄從下方升起，可以「放大閱讀」或收起來看海圖；「目錄」列出所有的島、區與技術，不用操作 3D 也能找到每一頁。
@@ -58,6 +59,8 @@ src/
 │  scene/            Three.js 海圖：layout（六角格與花形區）、islands、landmarks、sea（等深線）、routes（海路）、balloon（Dr. T）、World（相機、點選、地名）
 │  components/       說明欄、地名、Dr. T、搜尋、目錄、資料來源
 │  state/route.js    網址（#/district/robot）＝目前位置，可分享、可上一頁
+api/tts/             Vercel Function：自然男聲（有設定 Azure 金鑰時）
+server/              朗讀文字（只唸網站自己的內容）與 Azure 語音
 scripts/
 │  validate.mjs      完整性檢查：引用都存在、研發主題與科技專案和原文逐條一致
 │  verify-sources.mjs 原文摘錄與 PDF 文字逐字比對

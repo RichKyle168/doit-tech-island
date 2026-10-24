@@ -1,5 +1,10 @@
 /**
- * Read-aloud engine (the device's own voices, through the Web Speech API).
+ * Read-aloud engine.
+ *
+ *   server  — the site has a natural neural voice (/api/tts, a warm Taiwanese male voice):
+ *             play its mp3 for each part
+ *   browser — the device's own Mandarin voices (Web Speech API)
+ *   null    — nothing that can speak Mandarin: read-aloud buttons are hidden
  *
  * Which voice: the most natural-sounding Mandarin voice the device has. Neural and
  * "enhanced/premium" voices first (Edge's "… Online (Natural)", Apple's enhanced voices,
@@ -9,10 +14,17 @@
  * Pitch stays at the voice's own setting; speed defaults to a brisk 1.2×.
  * One thing speaks at a time.
  */
-import { sentences } from '../../shared/speech.js';
+import { SAMPLE, sentences } from '../../shared/speech.js';
+
+export { SAMPLE };
 
 const synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
 const STORE = 'tech-island.voice';
+const audio = typeof Audio !== 'undefined' ? new Audio() : null;
+if (audio) audio.preload = 'auto';
+export const SERVER_VOICE = 'server';
+// the one-file preview has no server behind it
+const HAS_API = import.meta.env.MODE !== 'artifact';
 
 // 「正常」 is a little brisker than a voice's default (1.0 reads slowly for most Mandarin voices)
 export const RATES = [
@@ -21,12 +33,14 @@ export const RATES = [
   { id: 'fast', label: '快一點', value: 1.4 },
   { id: 'faster', label: '更快', value: 1.6 },
 ];
-export const SAMPLE = '您好，我是 Dr. T。這是朗讀的聲音和速度，聽起來舒服嗎？';
 
 const NATURAL = /natural|neural|premium|enhanced|增強|優化|高音質|siri/i;
 const NETWORK = /google/i;
 const LEGACY = /hanhan|yating|zhiwei|huihui|kangkang|yaoyao|espeak|desktop/i;
-const WARM = /yunjhe|yunxi|yunyang|yunjian|男|male/i;
+// voice names that tell the gender (the Web Speech API itself does not say)
+const MALE = /yunjhe|yunxi|yunyang|yunjian|yunhao|yunfeng|yunze|yunxia|zhiwei|kangkang|li-?mu|李牧|男|\bmale\b/i;
+const FEMALE = /hsiaochen|hsiaoyu|xiaoxiao|xiaoyi|xiaohan|xiaomeng|xiaomo|xiaoqiu|xiaorui|xiaoshuang|xiaoxuan|xiaoyan|xiaoyou|xiaozhen|hanhan|yating|huihui|yaoyao|mei-?jia|美佳|ting-?ting|婷婷|sinji|yu-?shu|shanshan|女|female|google/i;
+const genderOf = (v) => (MALE.test(v.name) ? 'male' : FEMALE.test(v.name) ? 'female' : null);
 
 const isMandarin = (v) => {
   const lang = v.lang.replace('_', '-').toLowerCase();
@@ -39,7 +53,7 @@ function score(v) {
   if (NATURAL.test(v.name)) s += 45;
   else if (NETWORK.test(v.name)) s += 30;
   if (LEGACY.test(v.name)) s -= 40;
-  if (NATURAL.test(v.name) && WARM.test(v.name)) s += 4;
+  if (genderOf(v) === 'male') s += 35; // a male voice is preferred
   if (!v.localService) s += 2;
   return s;
 }
@@ -61,19 +75,23 @@ function quality(v) {
   return '裝置內建';
 }
 
-/** The Mandarin voices on this device, best first. */
+let serverVoice = false;
+
+/** Voices to choose from, best first: the site's natural male voice (when set up), then the device's. */
 export function voices() {
-  if (!synth) return [];
-  return synth.getVoices()
+  const list = serverVoice ? [{ id: SERVER_VOICE, label: '網站的自然人聲', note: '臺灣國語，男聲，自然語音', score: 1000, gender: 'male' }] : [];
+  if (!synth) return list;
+  return list.concat(synth.getVoices()
     .filter(isMandarin)
     .map((v) => ({
       id: v.voiceURI || v.name,
       label: label(v),
-      note: `${isTaiwan(v) ? '臺灣國語' : '普通話'}，${quality(v)}`,
+      note: [isTaiwan(v) ? '臺灣國語' : '普通話', { male: '男聲', female: '女聲' }[genderOf(v)], quality(v)].filter(Boolean).join('，'),
       score: score(v),
+      gender: genderOf(v),
       voice: v,
     }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score));
 }
 
 function load() {
@@ -99,12 +117,17 @@ export function onModeChange(fn) {
 
 function pickMode() {
   const list = voices();
-  voice = list.find((x) => x.id === settings.voice)?.voice || list[0]?.voice || null;
-  mode = voice ? 'browser' : null;
+  const chosen = list.find((x) => x.id === settings.voice) || list[0] || null;
+  mode = !chosen ? null : chosen.id === SERVER_VOICE ? 'server' : 'browser';
+  voice = chosen?.voice || list.find((x) => x.voice)?.voice || null; // also the fallback when the server voice fails
   notify();
 }
 
-export const getSettings = () => ({ ...settings, voice: voice ? voice.voiceURI || voice.name : settings.voice });
+export const getSettings = () => {
+  const list = voices();
+  const chosen = list.find((x) => x.id === settings.voice) || list[0];
+  return { ...settings, voice: chosen?.id || null };
+};
 
 export function setSettings(patch) {
   settings = { ...settings, ...patch };
@@ -112,48 +135,63 @@ export function setSettings(patch) {
   pickMode();
 }
 
-let ready = false;
+let ready = null;
 export function initSpeech() {
-  if (ready) return;
-  ready = true;
-  if (synth) {
-    if (synth.addEventListener) synth.addEventListener('voiceschanged', pickMode);
-    else synth.onvoiceschanged = pickMode;
-  }
-  pickMode();
+  if (ready) return ready;
+  ready = (async () => {
+    if (HAS_API && audio) {
+      try {
+        const r = await fetch('/api/tts', { headers: { Accept: 'application/json' } });
+        serverVoice = r.ok && Boolean((await r.json()).available);
+      } catch { serverVoice = false; }
+    }
+    if (synth) {
+      if (synth.addEventListener) synth.addEventListener('voiceschanged', pickMode);
+      else synth.onvoiceschanged = pickMode;
+    }
+    pickMode();
+  })();
   window.addEventListener('pagehide', stopSpeech);
+  return ready;
 }
 
 let session = 0;
 
 export function stopSpeech() {
   session += 1;
+  if (audio && audio.src) {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  }
   if (synth && (synth.speaking || synth.pending)) synth.cancel();
 }
 
+/** A short fingerprint of the text, so a cached recording is replaced when the text changes. */
+function fingerprint(text) {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  return (h >>> 0).toString(36);
+}
+
 /**
- * Reads segments in order: [{ part, text }].
- * cb: { onSegment(index), onPlaying(), onEnd() }. Call from a tap so phones allow sound.
+ * Reads segments in order: [{ id, part, text }].
+ * cb: { onSegment(index), onPlaying(), onEnd(), onError() }. Call from a tap so phones allow sound.
  */
 export function speak(segments, cb = {}) {
   stopSpeech();
-  if (!synth) return;
   const mine = session;
   const live = () => mine === session;
   const rate = RATES.find((r) => r.id === settings.rate)?.value || 1.2;
   let i = 0;
 
-  const next = () => {
-    if (!live()) return;
-    if (i >= segments.length) { cb.onEnd?.(); return; }
-    const seg = segments[i];
-    cb.onSegment?.(i);
-    i += 1;
+  const browser = (seg, done) => {
+    if (!synth) { done(); return; }
     const parts = sentences(seg.text);
     let k = 0;
     const say = () => {
       if (!live()) return;
-      if (k >= parts.length) { next(); return; }
+      if (k >= parts.length) { done(); return; }
       const u = new SpeechSynthesisUtterance(parts[k]);
       k += 1;
       if (voice) u.voice = voice;
@@ -169,6 +207,33 @@ export function speak(segments, cb = {}) {
       synth.speak(u);
     };
     say();
+  };
+
+  const server = (seg, done) => {
+    if (!seg.id) { browser(seg, done); return; }
+    audio.onended = () => live() && done();
+    audio.onerror = () => live() && browser(seg, done); // voice service unavailable: fall back to the device voice
+    audio.onplaying = () => live() && cb.onPlaying?.();
+    audio.src = `/api/tts/${encodeURIComponent(seg.id)}/${encodeURIComponent(seg.part)}?h=${fingerprint(seg.text)}`;
+    audio.playbackRate = rate;
+    const p = audio.play();
+    if (p?.catch) {
+      p.catch((err) => {
+        if (!live()) return;
+        if (err?.name === 'NotAllowedError') { cb.onError?.(err); return; }
+        if (err?.name !== 'AbortError') browser(seg, done);
+      });
+    }
+  };
+
+  const next = () => {
+    if (!live()) return;
+    if (i >= segments.length) { cb.onEnd?.(); return; }
+    const seg = segments[i];
+    cb.onSegment?.(i);
+    i += 1;
+    if (mode === 'server') server(seg, next);
+    else browser(seg, next);
   };
   next();
 }

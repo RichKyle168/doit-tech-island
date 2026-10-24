@@ -41,7 +41,7 @@ export const useSpeech = () => useContext(SpeechCtx);
 
 const segment = (item, part) => {
   const raw = partText(item, part);
-  return raw ? { part, text: speakable(raw) } : null;
+  return raw ? { id: item.id, part, text: speakable(raw) } : null;
 };
 
 /** One field of a page. */

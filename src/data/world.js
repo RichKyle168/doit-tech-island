@@ -57,6 +57,16 @@ export const techsOf = (districtId) => TECHS.filter((t) => t.district === distri
 export const streetsOf = (districtId) => STREETS.filter((s) => s.district === districtId);
 export const techsOnStreet = (streetId) => TECHS.filter((t) => t.street === streetId);
 
+/** How a page's name is said (and shown as its title): 機械島, 機器人區, 感知街… */
+export function spokenName(x) {
+  if (!x) return '';
+  if (x.kind === 'island') return x.islandZh;
+  if (x.kind === 'district') return `${x.nameZh}區`;
+  if (x.kind === 'street') return `${x.nameZh}街`;
+  if (x.kind === 'topic') return x.t.replace(/　/g, ' ');
+  return x.nameZh;
+}
+
 // ─────────────────────────────────────────────── links between technologies and districts
 const DISTRICT_IDS = new Set(DISTRICTS.map((d) => d.id));
 const TECH_IDS = new Set(TECHS.map((t) => t.id));
