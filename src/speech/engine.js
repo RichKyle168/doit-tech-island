@@ -6,7 +6,7 @@
  * Google's network voices), Taiwanese Mandarin before other Mandarin, and the old desktop
  * voices (Hanhan, Yating, Zhiwei…) last, because those are the ones that sound mechanical.
  * The visitor can pick another voice and a speed; the choice is remembered on that device.
- * Speed and pitch are left at the voice's own natural setting unless the visitor changes speed.
+ * Pitch stays at the voice's own setting; speed defaults to a brisk 1.2×.
  * One thing speaks at a time.
  */
 import { sentences } from '../../shared/speech.js';
@@ -14,10 +14,12 @@ import { sentences } from '../../shared/speech.js';
 const synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
 const STORE = 'tech-island.voice';
 
+// 「正常」 is a little brisker than a voice's default (1.0 reads slowly for most Mandarin voices)
 export const RATES = [
-  { id: 'slow', label: '慢一點', value: 0.85 },
-  { id: 'normal', label: '正常', value: 1 },
-  { id: 'fast', label: '快一點', value: 1.15 },
+  { id: 'slow', label: '慢一點', value: 1 },
+  { id: 'normal', label: '正常', value: 1.2 },
+  { id: 'fast', label: '快一點', value: 1.4 },
+  { id: 'faster', label: '更快', value: 1.6 },
 ];
 export const SAMPLE = '您好，我是 Dr. T。這是朗讀的聲音和速度，聽起來舒服嗎？';
 
@@ -138,7 +140,7 @@ export function speak(segments, cb = {}) {
   if (!synth) return;
   const mine = session;
   const live = () => mine === session;
-  const rate = RATES.find((r) => r.id === settings.rate)?.value || 1;
+  const rate = RATES.find((r) => r.id === settings.rate)?.value || 1.2;
   let i = 0;
 
   const next = () => {
