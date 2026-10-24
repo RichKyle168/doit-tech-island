@@ -1,5 +1,6 @@
 import { get } from '../data/world.js';
 import { parentOf } from '../state/route.js';
+import { useSpeech } from './Speech.jsx';
 
 /** The trail from the open sea down to where the visitor is. */
 function trail(route) {
@@ -26,7 +27,8 @@ function trail(route) {
 
 const Icon = ({ d }) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
-export default function TopBar({ route, go, onSearch, onDirectory }) {
+export default function TopBar({ route, go, onSearch, onDirectory, onVoice }) {
+  const { mode } = useSpeech();
   const steps = trail(route);
   const up = parentOf(route);
   return (
@@ -44,6 +46,11 @@ export default function TopBar({ route, go, onSearch, onDirectory }) {
           </span>
         </button>
         <div className="top__actions">
+          {mode && (
+            <button type="button" className="tool tool--voice" onClick={onVoice} aria-label="朗讀的聲音與語速">
+              <Icon d="M4 9.5h3.2L12 5.5v13l-4.8-4H4zM15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.6 7.6 0 0 1 0 11" /><span>聲音</span>
+            </button>
+          )}
           <button type="button" className="tool" onClick={onSearch}>
             <Icon d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15zM16 16l5 5" /><span>搜尋</span>
           </button>

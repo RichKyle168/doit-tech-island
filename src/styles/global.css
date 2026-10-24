@@ -179,7 +179,7 @@ p.pending { display: inline-block; }
 .panel__name.is-reading { background: var(--buoy-soft); box-shadow: -8px 0 0 var(--buoy-soft), 8px 0 0 var(--buoy-soft); }
 .panel__en { font-size: 14px; color: var(--ink-3); margin-top: 2px; }
 .panel__scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 24px 24px; }
-.panel__tools { margin: 16px 0 4px; }
+.panel__tools { margin: 16px 0 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .panel__foot { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule); }
 
 .lead { margin-top: 16px; padding: 14px 16px 16px; background: var(--card-2); border-left: 4px solid var(--shoal); }
@@ -304,10 +304,33 @@ p.pending { display: inline-block; }
 .dir__techs li { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; padding: 3px 0; }
 .dir__street { background: none; border: 0; padding: 0; font-family: var(--display); font-weight: 700; font-size: 16px; cursor: pointer; color: var(--ink); }
 
+/* voice picker */
+.voice { overflow-y: auto; padding: 8px 24px 24px; }
+.voice__group { border: 0; margin: 12px 0 0; padding: 0; min-width: 0; }
+.voice__group legend { padding: 0; margin-bottom: 8px; font-family: var(--display); font-size: 19px; font-weight: 700; }
+.voice__rates { display: flex; gap: 8px; flex-wrap: wrap; }
+.voice__rate {
+  height: 48px; padding: 0 20px; font-size: 17px; font-weight: 500; cursor: pointer;
+  background: var(--card); border: 1.5px solid var(--rule-strong); border-radius: 24px;
+}
+.voice__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.voice__item {
+  display: grid; gap: 2px; width: 100%; padding: 11px 14px 12px; text-align: left; cursor: pointer;
+  background: var(--card); border: 1.5px solid var(--rule-strong); border-radius: 3px;
+}
+.voice__rate:hover, .voice__item:hover { border-color: var(--ink); }
+.voice__rate.is-on, .voice__item.is-on { border-color: var(--sea); background: var(--shoal-soft); box-shadow: inset 0 0 0 1px var(--sea); }
+.voice__name { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
+.voice__name em { font-style: normal; font-size: 13px; font-weight: 500; padding: 0 8px; border-radius: 10px; background: var(--buoy); color: var(--ink); }
+.voice__note { font-size: 15px; color: var(--ink-2); }
+.voice__foot { margin-top: 18px; display: grid; gap: 10px; justify-items: start; }
+.voice__foot p { font-size: 15px; color: var(--ink-3); }
+
 /* ───────────────────────────── phones */
 .is-narrow .brand__text strong { font-size: 21px; }
 .is-narrow .brand__mark { width: 34px; height: 34px; }
 .is-narrow .tool { padding: 0 12px; }
+.is-narrow .tool--voice { display: none; }
 .is-narrow .panel {
   left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); top: auto; width: auto;
   max-height: 46vh;

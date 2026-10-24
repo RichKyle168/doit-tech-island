@@ -232,9 +232,9 @@ function titleOf(x) {
 
 export { titleOf };
 
-export default function Panel({ id, go, open, sheet, narrow, onClose, onSheet, panelRef }) {
+export default function Panel({ id, go, open, sheet, narrow, onClose, onSheet, onVoice, panelRef }) {
   const collapsed = sheet === 'peek';
-  const { stop, playing } = useSpeech();
+  const { stop, playing, mode } = useSpeech();
   const scroller = useRef(null);
   const item = id ? get(id) : null;
   useEffect(() => { scroller.current?.scrollTo({ top: 0 }); }, [id]);
@@ -278,9 +278,10 @@ export default function Panel({ id, go, open, sheet, narrow, onClose, onSheet, p
           </header>
           <div className="panel__scroll" ref={scroller} hidden={collapsed}>
             <motion.div key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
-              {speakItem && (
+              {(speakItem || mode) && (
                 <div className="panel__tools">
-                  <SpeakButton id={`all:${item.id}`} segments={pageSegments(speakItem, parts)} label="朗讀全文" title={name} wide />
+                  {speakItem && <SpeakButton id={`all:${item.id}`} segments={pageSegments(speakItem, parts)} label="朗讀全文" title={name} wide />}
+                  {mode && <button type="button" className="link panel__voice" onClick={onVoice}>換聲音、調語速</button>}
                 </div>
               )}
               {item.kind === 'island' && <IslandBody island={item} go={go} />}

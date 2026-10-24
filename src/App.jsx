@@ -7,7 +7,7 @@ import Labels from './components/Labels.jsx';
 import Panel from './components/Panel.jsx';
 import Guide from './components/Guide.jsx';
 import TopBar from './components/TopBar.jsx';
-import { DirectoryDialog, SearchDialog } from './components/Dialogs.jsx';
+import { DirectoryDialog, SearchDialog, VoiceDialog } from './components/Dialogs.jsx';
 
 function useMedia(query) {
   const [on, setOn] = useState(() => window.matchMedia(query).matches);
@@ -127,7 +127,7 @@ export default function App() {
       <div className="chart" ref={host}>
         <Labels view={view} world={world} go={navigate} selected={panelId} hovered={hovered} />
       </div>
-      <TopBar route={route} go={navigate} onSearch={() => setDialog('search')} onDirectory={() => setDialog('dir')} />
+      <TopBar route={route} go={navigate} onSearch={() => setDialog('search')} onDirectory={() => setDialog('dir')} onVoice={() => setDialog('voice')} />
       {route.kind === 'sea' && !narrow && <Legend go={navigate} />}
       <Guide route={route} hidden={guideHide} onClose={() => setGuideHidden(true)} />
       <Panel
@@ -138,6 +138,7 @@ export default function App() {
         narrow={narrow}
         onClose={() => setPanelOpen(false)}
         onSheet={setSheet}
+        onVoice={() => setDialog('voice')}
         panelRef={panelRef}
       />
       {!showPanel && panelId && (
@@ -146,6 +147,7 @@ export default function App() {
       <AnimatePresence>
         {dialog === 'search' && <SearchDialog key="s" onClose={() => setDialog(null)} go={navigate} />}
         {dialog === 'dir' && <DirectoryDialog key="d" onClose={() => setDialog(null)} go={navigate} />}
+        {dialog === 'voice' && <VoiceDialog key="v" onClose={() => setDialog(null)} />}
       </AnimatePresence>
     </div>
   );
